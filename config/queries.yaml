@@ -1,0 +1,93 @@
+servers:
+  - name: "server1"
+    dsn: "tcp://10.1.6.96:9000?username=clickhouse&password=22&database=default"
+  - name: "server2"
+    dsn: "tcp://10.1.6.97:9000?username=clickhouse&password=22&database=default"
+
+queries:
+  - name: "total_users"
+    query: "SELECT COUNT(*) as total, currentDatabase() as database FROM system.users"
+    metric_name: "clickhouse_total_users"
+    help: "Total number of users in the database"
+    type: "gauge"
+    labels: ["database"]  # Указываем, какие столбцы использовать как лейблы
+    value_column: "total"  # Столбец, используемый как значение метрики
+
+  - name: "total_users_tesst"
+    query: "SELECT COUNT(*) as total, currentDatabase() as database FROM system.users"
+    metric_name: "total_users_tesst"
+    help: "Total number of users in the database"
+    type: "gauge"
+    labels: ["database"]  # Указываем, какие столбцы использовать как лейблы
+    value_column: "total"  # Столбец, используемый как значение метрики
+
+
+  - name: "total_rows_in_table"
+    query: |
+      SELECT concatAssumeInjective(table.database, '.', name) as name,
+            table_stats.total_rows as total_rows
+      FROM system.tables table
+              LEFT JOIN ( SELECT table,
+            database,
+            sum(rows)                  as total_rows
+      FROM system.parts
+      GROUP BY table, database
+      ) AS table_stats ON table.name = table_stats.table AND table.database = table_stats.database
+      ORDER BY total_rows DESC
+      LIMIT 10
+    metric_name: "total_rows_in_table"
+    help: "Total number of users in the database"
+    type: "gauge"
+    labels: ["name"]  # Указываем, какие столбцы использовать как лейблы
+    value_column: "total_rows"  # Столбец, используемый как значение метрики
+
+
+  - name: "database_size"
+    query: |
+      SELECT
+          database AS db_name,
+          sum(total_bytes) AS db_size_bytes
+      FROM system.tables
+      WHERE database NOT IN ('information_schema', 'INFORMATION_SCHEMA')
+      GROUP BY database
+      ORDER BY db_size_bytes DESC
+      LIMIT 10;
+    metric_name: "database_size"
+    help: "Total number of users in the database"
+    type: "gauge"
+    labels: ["db_name"]  # Указываем, какие столбцы использовать как лейблы
+    value_column: "db_size_bytes"  # Столбец, используемый как значение метрики
+
+
+  - name: "clickhouse_table_size"
+    query: |
+      SELECT
+          total_bytes AS table_size,
+          concatAssumeInjective(database, '.', name) as name
+      FROM system.tables
+      WHERE database NOT IN ('INFORMATION_SCHEMA') AND table_size NOT IN (NULL)
+      ORDER BY total_bytes DESC
+      LIMIT 100;
+    metric_name: "clickhouse_table_size"
+    help: "Total number of users in the database"
+    type: "gauge"
+    labels: ["name"]  # Указываем, какие столбцы использовать как лейблы
+    value_column: "table_size"  # Столбец, используемый как значение метрики
+
+
+  # - name: "clickhosue_query_duration"
+  #   query: |
+  #     SELECT 
+  #         query_duration_ms, 
+  #         initial_user, 
+  #         substring(query_id,1, 8) as query_id,
+  #         query_kind,
+  #         normalizeQuery(query) AS normalized_query, 
+  #         memory_usage 
+  #     FROM system.query_log 
+  #     ORDER BY query_duration_ms DESC LIMIT  100
+  #   metric_name: "clickhosue_query_duration"
+  #   help: "Total number of users in the database"
+  #   type: "gauge"
+  #   labels: ["initial_user", "normalized_query"]  # Указываем, какие столбцы использовать как лейблы
+  #   value_column: "query_duration_ms"  # Столбец, используемый как значение метрики
