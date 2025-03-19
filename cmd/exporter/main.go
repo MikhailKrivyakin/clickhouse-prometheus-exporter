@@ -15,7 +15,7 @@ import (
 func main() {
 
 	// Определяем флаг для пути к конфигурационному файлу
-	configPath := flag.String("config", "config/queries.yaml", "Path to the configuration file")
+	configPath := flag.String("config", "config.yaml", "Path to the configuration file")
 	flag.Parse()
 	// Загружаем конфигурацию
 	cfg, err := config.LoadConfig(*configPath)
