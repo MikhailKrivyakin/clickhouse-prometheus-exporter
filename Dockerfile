@@ -14,11 +14,11 @@ RUN go build -o clickhouse-prometheus-exporter ./cmd/exporter/main.go
 FROM alpine:latest
 
 # Копируем собранное приложение
-COPY --from=builder /app/clickhouse-prometheus-exporter /clickhouse-prometheus-exporter
+COPY --from=builder /app/clickhouse-prometheus-exporter /etc/clickhouse-prometheus-exporter
 COPY config/queries.yaml /config/queries.yaml
 
 # Указываем порт, который будет использоваться
 EXPOSE 8080
 
 # Команда для запуска приложения
-CMD ["/clickhouse-prometheus-exporter"]
+CMD ["/etc/clickhouse-prometheus-exporter"]
